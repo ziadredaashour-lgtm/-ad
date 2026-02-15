@@ -1,0 +1,116 @@
+const { Client } = require('whatsapp-web.js');
+const fs = require('fs');
+const client = new Client();
+
+const ownerNumber = '4915510604467' 
+let warns = {};
+
+let elite = [];
+if (fs.existsSync('warns.json')) {
+    warns = JSON.parse(fs.readFileSync('warns.json', 'utf8'));
+}
+if (fs.existsSync('elite.json')) {
+    elite = JSON.parse(fs.readFileSync('elite.json', 'utf8'));
+}
+
+client.on('ready', () => {
+    console.log('البوت جاهز!');
+});
+
+client.on('message', async message => {
+    if (message.body.startsWith('.')) {
+        const args = message.body.slice(1).split(/ +/);
+        const command = args.shift().toLowerCase();
+
+        switch (command) {
+            case 'أوامر':
+                message.reply(`
+✦❍⥃الأوامر [المالك]
+.أوامر
+.طرد
+.إضافة
+.تحذير
+.رفع
+.انزل
+.مسح الكل
+.خروج
+.ترحيب
+.نخبة اضف
+.نخبة ازل
+
+رقم المالك: ${ownerNumber}
+                `);
+                break;
+            case 'طرد':
+                if (elite.includes(message.author.id._serialized) || message.author.id._serialized === ownerNumber) {
+                    const user = message.mentionedUsers[0];
+                    if (user) {
+                        await message.chat.removeParticipants([user]);
+                        message.reply(`تم طرد ${user}!`);
+                    } else {
+                        message.reply('منشن الشخص!');
+                    }
+                } else {
+                    message.reply('أنت مش نخبة!');
+                }
+                break;
+            case 'إضافة':
+                if (elite.includes(message.author.id._serialized) || message.author.id._serialized === ownerNumber) {
+                    const user = message.mentionedUsers[0];
+                    if (user) {
+                        await message.chat.addParticipants([user]);
+                        message.reply(`تم إضافة ${user}!`);
+                    } else {
+                        message.reply('منشن الشخص!');
+                    }
+                } else {
+                    message.reply('أنت مش نخبة!');
+                }
+                break;
+            case 'تحذير':
+                if (elite.includes(message.author.id._serialized) || message.author.id._serialized === ownerNumber) {
+                    const user = message.mentionedUsers[0];
+                    if (user && args.length > 0) {
+                        const reason = args.join(' ');
+                        const userId = user.id._serialized;
+                        if (!warns[userId]) warns[userId] = { count: 0, reasons: [] };
+                        warns[userId].count++;
+                        warns[userId].reasons.push(reason);
+                        fs.writeFileSync('warns.json', JSON.stringify(warns, null, 2));
+                        const warnCount = warns[userId].count;
+                        const warnMsg = `
+*❅━┉━ـ༈ۖ҉『🍁』ـ༈ۖ҉━┉━❅*
+_تم تحذير العضو بنجاح!_
+_______________
+*الادمن: ${message.author}*
+_______________
+*المستخدم: ${user}*
+_______________
+*سبب التحذير: ${reason}*
+_______________
+*عدد التحذيرات: ${warnCount}*
+_______________
+~تنبية!!!~
+*『4 تحذيرات=طرد فوري』
+*❅━┉━ـ༈ۖ҉『🍁』ـ༈ۖ҉━┉━❅*
+                        `;
+                        message.reply(warnMsg);
+                        if (warnCount >= 4) {
+                            await message.chat.removeParticipants([user]);
+                            message.reply(`تم طرد ${user} بسبب 4 تحذيرات!`);
+                            delete warns[userId];
+                            fs.writeFileSync('warns.json', JSON.stringify(warns, null, 20, 2));
+                        }
+                    } else {
+                        message.reply('منشن الشخص واكتب سبب التحذير!');
+                    }
+                } else {
+                    message.reply('أنت مش نخبة!');
+                }
+                break;
+            case 'رفع':
+                if (elite.includes(message.author.id._serialized) || message.author.id._serialized === ownerNumber) {
+                    const user = message.mentionedUsers[0];
+                    if (user) {
+                        await message.chat.promoteParticipants([user]);
+                        message.reply(`تم رفع ${
