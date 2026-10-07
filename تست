@@ -1,0 +1,80 @@
+
+
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
+const OFFICIAL_DECORATION = '˚.❀ ⋅━ׄ━ׄ━ׄ━ׄ•﹝🐉﹞•━ׄ━ׄ━ׄ━ׄ ⋅❀.˚';
+const IMAGE_URL = 'https://files.catbox.moe/6d0rbi.jpg';
+const BOT_NAME = '𝑰𝑻𝑨𝑫⃝⃕𝑶𝑹𝑰 ⥃ 𝑩𝑶𝑻 🐉';
+const FOOTER = `> ${BOT_NAME}`;
+const NEWSLETTER_JID = '120363425725905537@newsletter';
+
+function buildMessage(lines) {
+    let msg = `${OFFICIAL_DECORATION}\n`;
+    for (const line of lines) {
+        if (line.type === 'title') msg += `📌 *${line.text}*\n`;
+        else if (line.type === 'subtitle') msg += `🔹 ${line.text}\n`;
+        else if (line.type === 'divider') msg += `─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─\n`;
+        else if (line.type === 'info') msg += `• *${line.label}:* ${line.value}\n`;
+        else if (line.type === 'line') msg += `${line.text}\n`;
+        else msg += `${line.text}\n`;
+    }
+    msg += `\n${FOOTER}`;
+    return msg;
+}
+
+let handler = async (m, { conn }) => {
+    const chatId = m.chat;
+
+    await conn.sendMessage(chatId, { react: { text: "🐉", key: m.key } });
+
+    try {
+        // استدعاء ملف NIXCODE بالمسار الكامل
+        const { ButtonV2 } = require("/home/container/core/NIXCODE.js");
+
+        const bodyText = buildMessage([
+            { type: 'title', text: '⚡ القائـمـة الـتـفـاعـلـيـة' },
+            { type: 'subtitle', text: 'اختر الفئة المطلوبة من الأزرار بالأسفل' },
+            { type: 'divider' },
+            { type: 'info', label: 'المستخدم', value: `@${m.sender.split('@')[0]}` },
+            { type: 'info', label: 'الحالة', value: 'نشط 🟢' }
+        ]);
+
+        const buttonV2 = new ButtonV2(conn)
+            .setBody(bodyText)
+            .setFooter(`𝑪𝑯𝑶𝑶𝑺𝑬 𝑨𝑵 𝑶𝑹𝑻𝑰𝑶𝑵 🐉`)
+            .setThumbnail(IMAGE_URL)
+            .addButton("📂 𝑶𝑾𝑨𝑴𝑬𝑹", ".اوامر")
+            .addButton("🐉 𝑶𝑾𝑵𝑬𝑹", ".المطور");
+
+        await buttonV2.send(chatId, { 
+            quoted: m,
+            mentions: [m.sender],
+            newsletter: {
+                name: BOT_NAME,
+                jid: NEWSLETTER_JID
+            }
+        });
+
+        await conn.sendMessage(chatId, { react: { text: "✅", key: m.key } });
+
+    } catch (err) {
+        console.error("[تست] خطأ:", err);
+        await conn.sendMessage(chatId, { react: { text: "❌", key: m.key } });
+        
+        await conn.sendMessage(chatId, {
+            text: buildMessage([
+                { type: 'title', text: '❌ خـطـأ فـي الـنـظـام' },
+                { type: 'line', text: 'حدث خطأ أثناء تحميل ملف NIXCODE من المسار المخصص.' },
+                { type: 'info', label: 'تفاصيل الخطأ', value: err.message }
+            ]),
+            mentions: [m.sender]
+        }, { quoted: m });
+    }
+};
+
+handler.help = ["تست"];
+handler.tags = ["main"];
+handler.command = ["تست", "تجربة"];
+
+export default handler;
